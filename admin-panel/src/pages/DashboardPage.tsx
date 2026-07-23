@@ -1,54 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api';
 import { 
   LayoutDashboard, 
   PenTool, 
   FolderKanban,
   TrendingUp,
   Users,
-  Activity
+  Activity,
+  Eye,
+  Heart
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const { admin } = useAuth();
-  
-  // Get updated data from localStorage
   const username = localStorage.getItem('adminUsername') || admin?.username || 'Admin';
   const profilePicture = localStorage.getItem('adminProfilePicture') || '';
 
+  const [blogStats, setBlogStats] = useState({ totalBlogs: 0, publishedBlogs: 0, draftBlogs: 0, totalViews: 0, totalLikes: 0 });
+  const [projectStats, setProjectStats] = useState({ total: 0, published: 0, draft: 0, featured: 0 });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [blogRes, projectRes] = await Promise.allSettled([
+          api.get('/blogs/stats/overview'),
+          api.get('/projects/stats/overview')
+        ]);
+        if (blogRes.status === 'fulfilled') setBlogStats(blogRes.value.data);
+        if (projectRes.status === 'fulfilled') setProjectStats(projectRes.value.data);
+      } catch (err) {
+        console.error('Failed to fetch stats', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const stats = [
-    {
-      name: 'Total Blogs',
-      value: '0',
-      icon: PenTool,
-      color: 'bg-blue-500',
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-600'
-    },
-    {
-      name: 'Total Projects',
-      value: '0',
-      icon: FolderKanban,
-      color: 'bg-purple-500',
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-600'
-    },
-    {
-      name: 'Active Users',
-      value: '1',
-      icon: Users,
-      color: 'bg-green-500',
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-600'
-    },
-    {
-      name: 'System Status',
-      value: 'Active',
-      icon: Activity,
-      color: 'bg-orange-500',
-      bgColor: 'bg-orange-50',
-      textColor: 'text-orange-600'
-    }
+    { name: 'Total Blogs', value: loadingStats ? '...' : String(blogStats.totalBlogs), icon: PenTool, color: 'bg-blue-500', bgColor: 'bg-blue-50', textColor: 'text-blue-600' },
+    { name: 'Published Blogs', value: loadingStats ? '...' : String(blogStats.publishedBlogs), icon: Eye, color: 'bg-green-500', bgColor: 'bg-green-50', textColor: 'text-green-600' },
+    { name: 'Total Projects', value: loadingStats ? '...' : String(projectStats.total), icon: FolderKanban, color: 'bg-purple-500', bgColor: 'bg-purple-50', textColor: 'text-purple-600' },
+    { name: 'Blog Views', value: loadingStats ? '...' : String(blogStats.totalViews), icon: TrendingUp, color: 'bg-orange-500', bgColor: 'bg-orange-50', textColor: 'text-orange-600' },
+    { name: 'Blog Likes', value: loadingStats ? '...' : String(blogStats.totalLikes), icon: Heart, color: 'bg-pink-500', bgColor: 'bg-pink-50', textColor: 'text-pink-600' },
+    { name: 'Featured Projects', value: loadingStats ? '...' : String(projectStats.featured), icon: Activity, color: 'bg-yellow-500', bgColor: 'bg-yellow-50', textColor: 'text-yellow-600' },
+    { name: 'Active Users', value: '1', icon: Users, color: 'bg-teal-500', bgColor: 'bg-teal-50', textColor: 'text-teal-600' },
+    { name: 'System Status', value: 'Active', icon: Activity, color: 'bg-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-600' },
   ];
 
   return (
@@ -85,7 +84,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <div
             key={stat.name}

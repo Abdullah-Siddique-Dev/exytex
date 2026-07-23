@@ -35,6 +35,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
+
 // MongoDB connection
 console.log('🔄 Connecting to MongoDB...');
 mongoose.connect(process.env.MONGODB_URI, {
@@ -65,6 +68,9 @@ app.use('/api/forms', require('./routes/forms'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/auth', require('./routes/auth-temp')); // Temporary auth without MongoDB
+app.use('/api/blogs', require('./routes/blogs'));
+app.use('/api/projects', require('./routes/projects'));
+app.use('/api/upload', require('./routes/upload'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

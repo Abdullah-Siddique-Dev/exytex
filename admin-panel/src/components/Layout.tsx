@@ -24,6 +24,7 @@ export const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [blogsExpanded, setBlogsExpanded] = useState(false);
+  const [projectsExpanded, setProjectsExpanded] = useState(false);
   const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -45,12 +46,18 @@ export const Layout: React.FC = () => {
     { name: 'View Blogs', href: '/blogs', icon: List },
   ];
 
+  const projectsSubMenu = [
+    { name: 'Add Project', href: '/projects/add', icon: Plus },
+    { name: 'View Projects', href: '/projects', icon: List },
+  ];
+
   const settingsSubMenu = [
     { name: 'Profile Settings', href: '/settings', icon: Settings },
   ];
 
   const isActive = (path: string) => location.pathname === path;
   const isBlogsActive = location.pathname.startsWith('/blogs');
+  const isProjectsActive = location.pathname.startsWith('/projects');
   const isSettingsActive = location.pathname.startsWith('/settings');
 
   const handleLogout = () => {
@@ -147,6 +154,35 @@ export const Layout: React.FC = () => {
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Projects with Submenu - Mobile */}
+            <div>
+              <button
+                onClick={() => setProjectsExpanded(!projectsExpanded)}
+                className={`w-full group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isProjectsActive ? 'bg-purple-50 text-purple-700' : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <div className="flex items-center">
+                  <FolderKanban className={`mr-3 h-5 w-5 ${isProjectsActive ? 'text-purple-600' : 'text-gray-500'}`} />
+                  Projects
+                </div>
+                {projectsExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+              {projectsExpanded && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {projectsSubMenu.map((item) => (
+                    <Link key={item.name} to={item.href} onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
+                        isActive(item.href) ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100'
+                      }`}>
                       <item.icon className="mr-2 h-4 w-4" />
                       {item.name}
                     </Link>
@@ -305,6 +341,39 @@ export const Layout: React.FC = () => {
                             : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Projects with Submenu - Desktop */}
+            <div>
+              <button
+                onClick={() => setProjectsExpanded(!projectsExpanded)}
+                className={`w-full group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                  isProjectsActive
+                    ? isDarkMode ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-50 text-purple-700'
+                    : isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <div className="flex items-center">
+                  <FolderKanban className={`mr-3 h-5 w-5 ${isProjectsActive ? 'text-purple-400' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  Projects
+                </div>
+                {projectsExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+              {projectsExpanded && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {projectsSubMenu.map((item) => (
+                    <Link key={item.name} to={item.href}
+                      className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
+                        isActive(item.href)
+                          ? isDarkMode ? 'text-purple-300 bg-purple-900/50' : 'text-purple-700 bg-purple-50'
+                          : isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+                      }`}>
                       <item.icon className="mr-2 h-4 w-4" />
                       {item.name}
                     </Link>

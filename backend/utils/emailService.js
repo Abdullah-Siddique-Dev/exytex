@@ -1,163 +1,217 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter
 const createTransporter = () => {
   return nodemailer.createTransporter({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
+    },
+    tls: {
+      rejectUnauthorized: false
     }
   });
 };
 
-// Send confirmation email to user
-const sendConfirmationEmail = async (submission) => {
-  try {
-    const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: process.env.EMAIL_FROM,
-      to: submission.email,
-      subject: 'Thank you for contacting Exytex - We\'ll be in touch soon!',
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
-            .highlight { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Thank You for Reaching Out!</h1>
-              <p>We've received your message and will respond shortly</p>
-            </div>
-            <div class="content">
-              <p>Dear ${submission.name},</p>
-              
-              <p>Thank you for contacting Exytex! We've successfully received your ${submission.formType} inquiry and our team will review it shortly.</p>
-              
-              <div class="highlight">
-                <h3>Your Submission Details:</h3>
-                <p><strong>Name:</strong> ${submission.name}</p>
-                <p><strong>Email:</strong> ${submission.email}</p>
-                <p><strong>Form Type:</strong> ${submission.formType}</p>
-                <p><strong>Submitted:</strong> ${new Date(submission.submittedAt).toLocaleString()}</p>
-                ${submission.service ? `<p><strong>Service:</strong> ${submission.service}</p>` : ''}
-              </div>
-              
-              <p>Our team typically responds within 24 hours during business days. If your inquiry is urgent, please don't hesitate to call us directly.</p>
-              
-              <p>In the meantime, feel free to explore our website to learn more about our services and recent projects.</p>
-              
-              <p>Best regards,<br>
-              The Exytex Team</p>
-            </div>
-            <div class="footer">
-              <p>This is an automated message. Please do not reply to this email.</p>
-              <p>© ${new Date().getFullYear()} Exytex. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Confirmation email sent to:', submission.email);
-    
-  } catch (error) {
-    console.error('❌ Error sending confirmation email:', error);
-    throw error;
-  }
-};
-
-// Send notification email to admin
+// Beautiful admin notification email
 const sendNotificationEmail = async (submission) => {
   try {
     const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: process.env.EMAIL_FROM,
-      to: process.env.EMAIL_USER, // Send to admin email
-      subject: `New ${submission.formType} Form Submission - ${submission.name}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #ff6b35; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .field { margin: 10px 0; padding: 10px; background: white; border-radius: 5px; }
-            .urgent { border-left: 4px solid #ff6b35; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🚨 New Form Submission</h1>
-              <p>Form Type: ${submission.formType.toUpperCase()}</p>
-            </div>
-            <div class="content">
-              <div class="field urgent">
-                <strong>Name:</strong> ${submission.name}
-              </div>
-              <div class="field">
-                <strong>Email:</strong> ${submission.email}
-              </div>
-              <div class="field">
-                <strong>Phone:</strong> ${submission.phone || 'Not provided'}
-              </div>
-              <div class="field">
-                <strong>Company:</strong> ${submission.company || 'Not provided'}
-              </div>
-              ${submission.service ? `<div class="field"><strong>Service:</strong> ${submission.service}</div>` : ''}
-              ${submission.role ? `<div class="field"><strong>Role:</strong> ${submission.role}</div>` : ''}
-              ${submission.budget ? `<div class="field"><strong>Budget:</strong> ${submission.budget}</div>` : ''}
-              <div class="field">
-                <strong>Message:</strong><br>
-                ${submission.message}
-              </div>
-              <div class="field">
-                <strong>Submitted At:</strong> ${new Date(submission.submittedAt).toLocaleString()}
-              </div>
-              <div class="field">
-                <strong>IP Address:</strong> ${submission.ipAddress || 'Unknown'}
-              </div>
-              
-              <p style="margin-top: 20px; text-align: center;">
-                <a href="${process.env.FRONTEND_URL}/admin" style="background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                  View in Admin Panel
-                </a>
-              </p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
-    };
 
-    await transporter.sendMail(mailOptions);
+    const formTypeLabel = {
+      'contact': '📬 Contact Form',
+      'hire-developer': '💼 Hire Developer',
+      'it-staffing': '👥 IT Staffing',
+      'digital-marketing': '📈 Digital Marketing',
+    }[submission.formType] || '📋 Form Submission';
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background:#f0f4f8; }
+    .wrapper { max-width:620px; margin:30px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.10); }
+    .header { background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%); padding:36px 32px; text-align:center; }
+    .header h1 { color:#fff; font-size:26px; font-weight:700; margin-bottom:6px; }
+    .header p { color:#bfdbfe; font-size:15px; }
+    .badge { display:inline-block; background:rgba(255,255,255,0.2); color:#fff; padding:6px 18px; border-radius:20px; font-size:13px; margin-top:12px; }
+    .body { padding:32px; }
+    .section-title { font-size:13px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+    .field-row { display:flex; align-items:flex-start; padding:12px 0; border-bottom:1px solid #f3f4f6; }
+    .field-row:last-child { border-bottom:none; }
+    .field-icon { width:36px; height:36px; border-radius:8px; background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:16px; margin-right:14px; flex-shrink:0; }
+    .field-label { font-size:12px; color:#9ca3af; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+    .field-value { font-size:15px; color:#1f2937; font-weight:500; margin-top:2px; }
+    .message-box { background:#f8fafc; border-left:4px solid #3b82f6; border-radius:0 8px 8px 0; padding:16px 20px; margin:20px 0; }
+    .message-box p { color:#374151; font-size:15px; line-height:1.7; }
+    .footer { background:#f8fafc; padding:20px 32px; text-align:center; border-top:1px solid #e5e7eb; }
+    .footer p { color:#9ca3af; font-size:13px; }
+    .time-badge { background:#fef3c7; color:#92400e; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>🔔 New Form Submission</h1>
+    <p>Someone just reached out through your website</p>
+    <div class="badge">${formTypeLabel}</div>
+  </div>
+  <div class="body">
+    <p class="section-title">Contact Details</p>
+
+    <div class="field-row">
+      <div class="field-icon">👤</div>
+      <div>
+        <div class="field-label">Full Name</div>
+        <div class="field-value">${submission.name}</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-icon">📧</div>
+      <div>
+        <div class="field-label">Email</div>
+        <div class="field-value">${submission.email}</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-icon">📞</div>
+      <div>
+        <div class="field-label">Phone</div>
+        <div class="field-value">${submission.phone || 'Not provided'}</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-icon">🏢</div>
+      <div>
+        <div class="field-label">Company</div>
+        <div class="field-value">${submission.company || 'Not provided'}</div>
+      </div>
+    </div>
+
+    ${submission.service ? `
+    <div class="field-row">
+      <div class="field-icon">⚙️</div>
+      <div>
+        <div class="field-label">Service Interested In</div>
+        <div class="field-value">${submission.service}</div>
+      </div>
+    </div>` : ''}
+
+    ${submission.budget ? `
+    <div class="field-row">
+      <div class="field-icon">💰</div>
+      <div>
+        <div class="field-label">Budget</div>
+        <div class="field-value">${submission.budget}</div>
+      </div>
+    </div>` : ''}
+
+    ${submission.role ? `
+    <div class="field-row">
+      <div class="field-icon">💼</div>
+      <div>
+        <div class="field-label">Role Required</div>
+        <div class="field-value">${submission.role}</div>
+      </div>
+    </div>` : ''}
+
+    <br/>
+    <p class="section-title">Message</p>
+    <div class="message-box">
+      <p>${submission.message}</p>
+    </div>
+  </div>
+  <div class="footer">
+    <span class="time-badge">⏰ ${new Date(submission.submittedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+    <p style="margin-top:10px;">Exytex Website — Automated Notification</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: process.env.EMAIL_USER,
+      subject: `🔔 New ${formTypeLabel} from ${submission.name}`,
+      html
+    });
+
     console.log('✅ Notification email sent to admin');
-    
   } catch (error) {
     console.error('❌ Error sending notification email:', error);
     throw error;
   }
 };
 
-module.exports = {
-  sendConfirmationEmail,
-  sendNotificationEmail
+// Confirmation email to the user
+const sendConfirmationEmail = async (submission) => {
+  try {
+    const transporter = createTransporter();
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background:#f0f4f8; }
+    .wrapper { max-width:620px; margin:30px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.10); }
+    .header { background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%); padding:40px 32px; text-align:center; }
+    .header h1 { color:#fff; font-size:28px; font-weight:700; }
+    .header p { color:#bfdbfe; font-size:15px; margin-top:8px; }
+    .body { padding:36px 32px; }
+    .body p { color:#374151; font-size:15px; line-height:1.8; margin-bottom:16px; }
+    .highlight { background:#eff6ff; border-radius:10px; padding:20px 24px; margin:20px 0; }
+    .highlight p { margin:6px 0; color:#1e40af; font-size:14px; }
+    .footer { background:#f8fafc; padding:20px 32px; text-align:center; border-top:1px solid #e5e7eb; }
+    .footer p { color:#9ca3af; font-size:13px; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>✅ We Got Your Message!</h1>
+    <p>Thank you for reaching out to Exytex</p>
+  </div>
+  <div class="body">
+    <p>Hi <strong>${submission.name}</strong>,</p>
+    <p>We've received your inquiry and our team will get back to you within <strong>24 hours</strong>.</p>
+    <div class="highlight">
+      <p><strong>📋 Form:</strong> ${submission.formType}</p>
+      <p><strong>📧 Email:</strong> ${submission.email}</p>
+      <p><strong>🕐 Submitted:</strong> ${new Date(submission.submittedAt).toLocaleString()}</p>
+    </div>
+    <p>If you have any urgent questions, feel free to reply to this email.</p>
+    <p>Best regards,<br/><strong>The Exytex Team</strong></p>
+  </div>
+  <div class="footer">
+    <p>© ${new Date().getFullYear()} Exytex. All rights reserved.</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to: submission.email,
+      subject: `✅ We received your message — Exytex`,
+      html
+    });
+
+    console.log('✅ Confirmation email sent to:', submission.email);
+  } catch (error) {
+    console.error('❌ Error sending confirmation email:', error);
+    throw error;
+  }
 };
+
+module.exports = { sendNotificationEmail, sendConfirmationEmail };
